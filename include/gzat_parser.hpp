@@ -27,6 +27,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <cstdint>
+#include <cstddef>
+
 namespace gzat {
 
     const std::string MS_LUT[7] =
@@ -106,7 +109,7 @@ namespace gzat {
          * @param[in]   parser          A child parser to add
          * @return      this parser
          */
-        Parser& AddChildParser(const std::shared_ptr<Parser> parser);
+        Parser& AddChildParser(const std::shared_ptr<Parser>& parser);
         
         /**
          * Specify a possible integer output from this parser

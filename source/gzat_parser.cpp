@@ -23,17 +23,16 @@
  */
 
 #include "gzat_parser.hpp"
-#include <iostream>
+
+#include <exception>
 
 namespace gzat {
 
-    AtCommand::AtCommand() {
+    AtCommand::AtCommand():ms{0U},me{0U} {
 
     }
 
-    AtCommand::AtCommand(const std::string & raw_cmd) {
-        ms = 0U;
-        me = 0U;
+    AtCommand::AtCommand(const std::string & raw_cmd):ms{0U},me{0U} {
         // Check start phase
         if(raw_cmd.substr(0, 2) == "AT") {
             // Check start marker
@@ -71,13 +70,10 @@ namespace gzat {
         return "AT"+cmd_id+ME_LUT[me]+cmd_payload;
     }
 
-    Parser::Parser() {
-        int_out = nullptr;
-        double_out = nullptr;
-        string_out = nullptr;
-    }
+    Parser::Parser()
+        : int_out{nullptr}, double_out{nullptr}, string_out{nullptr}, pos_in{0U} {}
 
-    Parser& Parser::AddChildParser(const std::shared_ptr<Parser> parser) {
+    Parser& Parser::AddChildParser(const std::shared_ptr<Parser>& parser) {
         child_parsers.push_back(parser);
         return *this;
     }
@@ -116,7 +112,7 @@ namespace gzat {
                 }
             }
             else {
-                for(parser_list_t::iterator iter = child_parsers.begin(); 
+                for(auto iter = child_parsers.begin(); 
                     (iter != child_parsers.end()) && (ret == GZAT_SUCCESS); iter++) {
                     ret = (*iter)->Parse(parsed);
                 }
@@ -128,12 +124,10 @@ namespace gzat {
         return ret;
     }
 
-    CommandParser::CommandParser(const AtCommand& cmd) {
-        cmd_req = cmd;
-    }
+    CommandParser::CommandParser(const AtCommand &cmd) : cmd_req{cmd} {}
 
     ErrorCode CommandParser::Parse(const std::string& response) {
-        ErrorCode err;
+        
         std::string response_cache = response;
         // Find command
         const std::string raw = cmd_req.GetRawCommand();
@@ -142,25 +136,17 @@ namespace gzat {
             response_cache = response_cache.substr(r_pos + raw.size());
         }
         size_t s_pos = response_cache.find(cmd_req.cmd_id);
-        if(s_pos == std::string::npos) {
-            err = GZAT_ERROR;
-        }
-        else {
-            err = CastOutput(response_cache.substr(s_pos+cmd_req.cmd_id.size()+2));
-        }
-        return err;
+        return (s_pos == std::string::npos) ? GZAT_ERROR : CastOutput(response_cache.substr(s_pos+cmd_req.cmd_id.size()+2));
     }
 
-    CommaSplitParser::CommaSplitParser(const size_t pos) : Parser() {
-        pos_in = pos;
-    }
+    CommaSplitParser::CommaSplitParser(const size_t pos) { pos_in = pos; }
 
     ErrorCode CommaSplitParser::Parse(const std::string& response) {
         ErrorCode err = GZAT_SUCCESS;
         size_t pos_cur = 0U;
         std::string response_cache = response;
         while((pos_cur < pos_in) && (err == GZAT_SUCCESS)) {
-            size_t s_pos = response_cache.find(",");
+            size_t s_pos = response_cache.find(',');
             if(s_pos == std::string::npos) {
                 err = GZAT_ERROR;
             }
@@ -171,22 +157,22 @@ namespace gzat {
         }
 
         if(err == GZAT_SUCCESS) {
-            size_t e_pos = response_cache.find(",");
+            size_t e_pos = response_cache.find(',');
             if(e_pos != std::string::npos) {
                 response_cache = response_cache.substr(0, e_pos);
             }
 
-            e_pos = response_cache.find("\r");
+            e_pos = response_cache.find('\r');
             if(e_pos != std::string::npos) {
                 response_cache = response_cache.substr(0, e_pos);
             }
 
-            e_pos = response_cache.find("\n");
+            e_pos = response_cache.find('\n');
             if(e_pos != std::string::npos) {
                 response_cache = response_cache.substr(0, e_pos);
             }
 
-            e_pos = response_cache.find(" ");
+            e_pos = response_cache.find(' ');
             if(e_pos != std::string::npos) {
                 response_cache = response_cache.substr(0, e_pos);
             }
@@ -196,27 +182,26 @@ namespace gzat {
         return err;
     }
 
-    NameValueParser::NameValueParser(const size_t pos) : Parser() {
+    NameValueParser::NameValueParser(const size_t pos) {
         pos_in = pos;
     }
 
-    ErrorCode NameValueParser::Parse(const std::string& response) {
+    ErrorCode NameValueParser::Parse(__attribute__((unused)) const std::string& response) {
         return GZAT_NOT_SUPPORTED;
     }
 
-    ParenthesesParser::ParenthesesParser(const size_t pos) : Parser() {
+    ParenthesesParser::ParenthesesParser(const size_t pos) {
         pos_in = pos;
     }
 
     ErrorCode ParenthesesParser::Parse(const std::string& response) {
-        ErrorCode err;
-        // Find first comma
-        size_t s_pos = response.find("(");
+        ErrorCode err{GZAT_ERROR};
+        size_t s_pos = response.find('(');
         if(s_pos == std::string::npos) {
             err = GZAT_ERROR;
         }
         else {
-            size_t e_pos = response.substr(s_pos+1).find(")");
+            size_t e_pos = response.substr(s_pos+1).find(')');
             if(e_pos == std::string::npos) {
                 err = GZAT_ERROR;
             }
@@ -227,4 +212,4 @@ namespace gzat {
         return err;
     }
 
-}
+} // namespace gzat
