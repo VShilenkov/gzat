@@ -23,11 +23,16 @@
  */
 
 #include "gzat_parser.hpp"
-#include <gtest/gtest.h>
+#include <gtest/gtest.h> // IWYU pragma: keep 
+// IWYU pragma: no_include <gtest/gtest-message.h>
+// IWYU pragma: no_include <gtest/gtest-test-part.h>
+// IWYU pragma: no_include "gtest/gtest_pred_impl.h"
 
-using namespace gzat;
+using gzat::AtCommand;
+using gzat::CommandParser;
+using gzat::CommaSplitParser;
 
-TEST(GZAT_Parse, Construct_No_MS)
+TEST(GZATParse, ConstructNoMS)
 {
     AtCommand atcmd("ATZ");
     EXPECT_EQ(atcmd.ms, 0);
@@ -37,7 +42,7 @@ TEST(GZAT_Parse, Construct_No_MS)
     EXPECT_STREQ(atcmd.GetRawCommand().c_str(), "ATZ");
 }
 
-TEST(GZAT_Parse, Construct_MS)
+TEST(GZATParse, ConstructMS)
 {
     AtCommand atcmd("AT+Z");
     EXPECT_EQ(atcmd.ms, 1);
@@ -47,7 +52,7 @@ TEST(GZAT_Parse, Construct_MS)
     EXPECT_STREQ(atcmd.GetRawCommand().c_str(), "AT+Z");
 }
 
-TEST(GZAT_Parse, Construct_MS_Test)
+TEST(GZATParse, ConstructMSTest)
 {
     AtCommand atcmd("AT#Z=?");
     EXPECT_EQ(atcmd.ms, 2);
@@ -57,7 +62,7 @@ TEST(GZAT_Parse, Construct_MS_Test)
     EXPECT_STREQ(atcmd.GetRawCommand().c_str(), "AT#Z=?");
 }
 
-TEST(GZAT_Parse, Construct_MS_Get)
+TEST(GZATParse, ConstructMSGet)
 {
     AtCommand atcmd("AT+CSQ?");
     EXPECT_EQ(atcmd.ms, 1);
@@ -67,7 +72,7 @@ TEST(GZAT_Parse, Construct_MS_Get)
     EXPECT_STREQ(atcmd.GetRawCommand().c_str(), "AT+CSQ?");
 }
 
-TEST(GZAT_Parse, Construct_MS_Set)
+TEST(GZATParse, ConstructMSSet)
 {
     AtCommand atcmd("AT+ABC=1,\"abc\"");
     EXPECT_EQ(atcmd.ms, 1);
@@ -77,73 +82,73 @@ TEST(GZAT_Parse, Construct_MS_Set)
     EXPECT_STREQ(atcmd.GetRawCommand().c_str(), "AT+ABC=1,\"abc\"");
 }
 
-TEST(GZAT_Parse, Parse_MS_Get_Int)
+TEST(GZATParse, ParseMSGetInt)
 {
     AtCommand atcmd("AT+CSQ?");
-    CommandParser p(atcmd);
-    std::shared_ptr<CommaSplitParser> p1 = std::make_shared<CommaSplitParser>(0);
+    CommandParser parser(atcmd);
+    std::shared_ptr<CommaSplitParser> csp1 = std::make_shared<CommaSplitParser>(0);
     int64_t p1_int = 0;
-    p1->AddIntegerOutput(&p1_int);
-    std::shared_ptr<CommaSplitParser> p2 = std::make_shared<CommaSplitParser>(1);
+    csp1->AddIntegerOutput(&p1_int);
+    std::shared_ptr<CommaSplitParser> csp2 = std::make_shared<CommaSplitParser>(1);
     int64_t p2_int = 0;
-    p2->AddIntegerOutput(&p2_int);
-    p.AddChildParser(p1).AddChildParser(p2);
-    p.Parse("+CSQ: 10,100");
+    csp2->AddIntegerOutput(&p2_int);
+    parser.AddChildParser(csp1).AddChildParser(csp2);
+    parser.Parse("+CSQ: 10,100");
     EXPECT_EQ(p1_int, 10);
     EXPECT_EQ(p2_int, 100);
 }
 
-TEST(GZAT_Parse, Parse_MS_Get_String)
+TEST(GZATParse, ParseMSGetString)
 {
     AtCommand atcmd("AT+PDP?");
-    CommandParser p(atcmd);
-    std::shared_ptr<CommaSplitParser> p1 = std::make_shared<CommaSplitParser>(0);
+    CommandParser parser(atcmd);
+    std::shared_ptr<CommaSplitParser> csp1 = std::make_shared<CommaSplitParser>(0);
     int64_t p1_int = 0;
-    p1->AddIntegerOutput(&p1_int);
-    std::shared_ptr<CommaSplitParser> p2 = std::make_shared<CommaSplitParser>(1);
+    csp1->AddIntegerOutput(&p1_int);
+    std::shared_ptr<CommaSplitParser> csp2 = std::make_shared<CommaSplitParser>(1);
     std::string p2_string;
-    p2->AddStringOutput(&p2_string);
-    std::shared_ptr<CommaSplitParser> p3 = std::make_shared<CommaSplitParser>(2);
+    csp2->AddStringOutput(&p2_string);
+    std::shared_ptr<CommaSplitParser> csp3 = std::make_shared<CommaSplitParser>(2);
     std::string p3_string;
-    p3->AddStringOutput(&p3_string);
-    p.AddChildParser(p1).AddChildParser(p2).AddChildParser(p3);
-    p.Parse("+PDP: 10,\"1.2.3.4\",abc\r\rOK");
+    csp3->AddStringOutput(&p3_string);
+    parser.AddChildParser(csp1).AddChildParser(csp2).AddChildParser(csp3);
+    parser.Parse("+PDP: 10,\"1.2.3.4\",abc\r\rOK");
     EXPECT_EQ(p1_int, 10);
     EXPECT_STREQ(p2_string.c_str(), "1.2.3.4");
     EXPECT_STREQ(p3_string.c_str(), "abc");
 }
 
-TEST(GZAT_Parse, Parse_MS_Get_Int_Dirty)
+TEST(GZATParse, ParseMSGetIntDirty)
 {
     AtCommand atcmd("AT+CSQ?");
-    CommandParser p(atcmd);
-    std::shared_ptr<CommaSplitParser> p1 = std::make_shared<CommaSplitParser>(0);
+    CommandParser parser(atcmd);
+    std::shared_ptr<CommaSplitParser> csp1 = std::make_shared<CommaSplitParser>(0);
     int64_t p1_int = 0;
-    p1->AddIntegerOutput(&p1_int);
-    std::shared_ptr<CommaSplitParser> p2 = std::make_shared<CommaSplitParser>(1);
+    csp1->AddIntegerOutput(&p1_int);
+    std::shared_ptr<CommaSplitParser> csp2 = std::make_shared<CommaSplitParser>(1);
     int64_t p2_int = 0;
-    p2->AddIntegerOutput(&p2_int);
-    p.AddChildParser(p1).AddChildParser(p2);
-    p.Parse("AT+CSQ?\r\r+CSQ: 10,100\r\rOK");
+    csp2->AddIntegerOutput(&p2_int);
+    parser.AddChildParser(csp1).AddChildParser(csp2);
+    parser.Parse("AT+CSQ?\r\r+CSQ: 10,100\r\rOK");
     EXPECT_EQ(p1_int, 10);
     EXPECT_EQ(p2_int, 100);
 }
 
-TEST(GZAT_Parse, Parse_MS_Get_String_Dirty)
+TEST(GZATParse, ParseMSGetStringDirty)
 {
     AtCommand atcmd("AT+PDP?");
-    CommandParser p(atcmd);
-    std::shared_ptr<CommaSplitParser> p1 = std::make_shared<CommaSplitParser>(0);
+    CommandParser parser(atcmd);
+    std::shared_ptr<CommaSplitParser> csp1 = std::make_shared<CommaSplitParser>(0);
     int64_t p1_int = 0;
-    p1->AddIntegerOutput(&p1_int);
-    std::shared_ptr<CommaSplitParser> p2 = std::make_shared<CommaSplitParser>(1);
+    csp1->AddIntegerOutput(&p1_int);
+    std::shared_ptr<CommaSplitParser> csp2 = std::make_shared<CommaSplitParser>(1);
     std::string p2_string;
-    p2->AddStringOutput(&p2_string);
-    std::shared_ptr<CommaSplitParser> p3 = std::make_shared<CommaSplitParser>(2);
+    csp2->AddStringOutput(&p2_string);
+    std::shared_ptr<CommaSplitParser> csp3 = std::make_shared<CommaSplitParser>(2);
     std::string p3_string;
-    p3->AddStringOutput(&p3_string);
-    p.AddChildParser(p1).AddChildParser(p2).AddChildParser(p3);
-    p.Parse("AT+PDP?\r\r+PDP: 10,\"1.2.3.4\",\"abc\"    \r\r   OK");
+    csp3->AddStringOutput(&p3_string);
+    parser.AddChildParser(csp1).AddChildParser(csp2).AddChildParser(csp3);
+    parser.Parse("AT+PDP?\r\r+PDP: 10,\"1.2.3.4\",\"abc\"    \r\r   OK");
     EXPECT_EQ(p1_int, 10);
     EXPECT_STREQ(p2_string.c_str(), "1.2.3.4");
     EXPECT_STREQ(p3_string.c_str(), "abc");

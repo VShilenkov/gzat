@@ -24,11 +24,13 @@
 
 #ifndef __GZAT__PARSER_HPP_
 #define __GZAT__PARSER_HPP_
+// IWYU pragma: begin_exports
 #include <string>
 #include <vector>
 #include <memory>
 #include <cstdint>
 #include <cstddef>
+// IWYU pragma: end_exports
 
 namespace gzat {
 
