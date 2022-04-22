@@ -37,6 +37,10 @@ if(WITH_CLANG_TIDY)
     include(UseClangTidy)
 endif()
 
+if(WITH_COVERAGE)
+    include(CodeCoverage)
+endif()
+
 # Package setting -------------------------------------------------------------
 
 set(PACKAGE_NAME                ${PROJECT_NAME})
@@ -100,6 +104,12 @@ write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake
     COMPATIBILITY AnyNewerVersion
 )
 
+# pkgconfig configuration ------------------------------------------------------
+configure_file("cmake/templates/${PACKAGE_NAME}.pc.in"
+               "${PACKAGE_NAME}.pc" 
+    @ONLY
+)
+
 # Static Code analysis ---------------------------------------------------------
 if(WITH_CLANG_TIDY)
     target_setup_clang_tidy(${PROJECT_NAME})
@@ -107,6 +117,11 @@ endif()
 
 # Testing ----------------------------------------------------------------------
 if(WITH_UNIT_TEST)
+
+    if(WITH_COVERAGE)
+        target_setup_coverage(${PROJECT_NAME})
+    endif()
+
     include(CTest)
     enable_testing()
     add_subdirectory(test)
@@ -123,7 +138,7 @@ feature_summary(WHAT ALL
 ## Targets installation
 install(TARGETS                 ${PROJECT_NAME}
     EXPORT                      ${PROJECT_NAME}Targets
-    LIBRARY         DESTINATION ${PACKAGE_INSTALL_LIB_DIR}
+    LIBRARY         DESTINATION ${PACKAGE_INSTALL_LIBRARY_DIR}
     PUBLIC_HEADER   DESTINATION ${PACKAGE_INSTALL_INCLUDE_DIR}
     COMPONENT                   ${PROJECT_NAME}
 )
@@ -141,6 +156,10 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}Config.cmake
     DESTINATION ${PACKAGE_INSTALL_CMAKE_DIR}
 )
 
+## pkgconfig configurations ----------------------------------------------------
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}.pc"
+    DESTINATION ${PACKAGE_INSTALL_LIBRARY_DIR}/pkgconfig
+)
 
 # Packaging --------------------------------------------------------------------
 list(APPEND CPACK_GENERATOR DEB)
