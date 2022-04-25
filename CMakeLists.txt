@@ -138,6 +138,7 @@ feature_summary(WHAT ALL
 ## Targets installation
 install(TARGETS                 ${PROJECT_NAME}
     EXPORT                      ${PROJECT_NAME}Targets
+    ARCHIVE         DESTINATION ${PACKAGE_INSTALL_LIBRARY_DIR}
     LIBRARY         DESTINATION ${PACKAGE_INSTALL_LIBRARY_DIR}
     PUBLIC_HEADER   DESTINATION ${PACKAGE_INSTALL_INCLUDE_DIR}
     COMPONENT                   ${PROJECT_NAME}
